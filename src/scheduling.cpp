@@ -95,7 +95,7 @@ void show_processes(list<Process> processes)
 list<Process> fifo(pqueue_arrival workload)
 {
   list<Process> complete;
-  Process[] *p = new Process[workload.size];
+  vector<Process> p;
 
   //store each process into an array in arrival time ascending order
   for(int i = workload.size; i > 0; i--){
@@ -116,7 +116,7 @@ list<Process> sjf(pqueue_arrival workload)
   list<Process> complete;
   int arrivalTime;
   int durationTime;
-  Process[] *p = new Process[workload.size];
+  vector<Process> p;
   vector<int> arriveTable;
   int curr;
   int prev = workload.top().arrival;

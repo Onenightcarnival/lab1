@@ -62,8 +62,53 @@ TEST(SchedulingTest, SchedulingTest6) {
 }
 
 TEST(SchedulingTest, SchedulingTest7) {
+  pqueue_arrival pq = read_workload("workloads/workload_01.txt");
+  list<Process> l = stcf(pq);
+  while(!l.empty()){
+    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
+    l.pop_front();
+  }
+}
+
+TEST(SchedulingTest, SchedulingTest8) {
+  pqueue_arrival pq = read_workload("workloads/workload_02.txt");
+  list<Process> l = stcf(pq);
+  while(!l.empty()){
+    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
+    l.pop_front();
+  }
+}
+
+TEST(SchedulingTest, SchedulingTest9) {
+  pqueue_arrival pq = read_workload("workloads/workload_03.txt");
+  list<Process> l = stcf(pq);
+  while(!l.empty()){
+    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
+    l.pop_front();
+  }
+}
+
+TEST(SchedulingTest, SchedulingTest10) {
+  pqueue_arrival pq = read_workload("workloads/workload_04.txt");
+  list<Process> l = stcf(pq);
+  while(!l.empty()){
+    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
+    l.pop_front();
+  }
+}
+
+TEST(SchedulingTest, SchedulingTest11) {
   pqueue_arrival pq = read_workload("workloads/workload_05.txt");
   list<Process> l = stcf(pq);
+  while(!l.empty()){
+    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
+    l.pop_front();
+  }
+}
+
+TEST(SchedulingTest, SchedulingTest12) {
+  pqueue_arrival pq = read_workload("workloads/workload_05.txt");
+  list<Process> l = rr(pq);
   while(!l.empty()){
     printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
     l.pop_front();

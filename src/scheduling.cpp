@@ -60,6 +60,8 @@ pqueue_arrival read_workload(string filename)
   	while(buff >> temp){
   		Process p;
   		p.arrival = temp;
+      p.first_run = -1;
+      p.completion = -1;
   		if(buff >> temp){
         p.duration = temp;
       }
@@ -99,14 +101,12 @@ void show_processes(list<Process> processes)
 list<Process> fifo(pqueue_arrival workload)
 {
   list<Process> complete;
-  int run = workload.top().arrival;
-  int finish = workload.top().duration;
+  int total = 0;
   while(!workload.empty()){
-  	Process p = workload.top();
-  	p.first_run = run;
-  	p.completion = finish;
-  	run = finish;
-  	finish = finish + p.duration;
+    Process p = workload.top();
+    p.first_run = total;
+    total += p.duration;
+    p.completion = p.first_run + p.duration;
     complete.push_back(p);
     workload.pop();
   }
@@ -115,125 +115,194 @@ list<Process> fifo(pqueue_arrival workload)
 
 list<Process> sjf(pqueue_arrival workload)
 { 
-	list<Process> complete;
-	int begin = 0;
-	int total = 0;
-	int nextArrival = 0;
-	pqueue_duration pd;
+  list<Process> complete;
+    vector<fakeProcess> fp;
+    fakepqueue_duration fpd;
+    int begin = workload.top().arrival;
 
-	while(!workload.empty()){
-		Process p = workload.top();
-		if(p.arrival == nextArrival){
-			pd.push(p);
-		}
-		else{
-			nextArrival = p.arrival;
-			while(!pd.empty()){
-				Process temp = pd.top();
-				temp.first_run = begin;
-				total += temp.duration;
-				temp.completion = total;
-				begin = total;
-				complete.push_back(temp);
-				pd.pop();
-			}
-			pd.push(p);
-		}
-		workload.pop();
-		if(workload.empty()){
-			while(!pd.empty()){
-				Process temp = pd.top();
-				temp.first_run = begin;
-				total += temp.duration;
-				temp.completion = total;
-				begin = total;
-				complete.push_back(temp);
-				pd.pop();
-			}
-		}
-	}
+    while(!workload.empty()){
+      Process t = workload.top();
+      fakeProcess f;
+      if(t.arrival <= begin){
+        f.p = t;
+        f.fake_arrival = begin;
+        fpd.push(f);
+        workload.pop();
+      }
+      else{
+        while(!fpd.empty()){
+          fakeProcess r = fpd.top();
+          r.p.first_run = begin;
+          begin += r.p.duration;
+          r.p.completion = begin;
+          fpd.pop();
+          complete.push_back(r.p);
+          if(fpd.empty()){
+            continue;
+          }
+          else{
+            Process c = workload.top();
+            if(begin < c.arrival){
+              continue;
+            }
+            else{
+              while(!fpd.empty()){
+                fp.push_back(fpd.top());
+                fpd.pop();
+              }
+              for(int i = 0; i< fp.size(); i++){
+                fp[i].fake_arrival = begin;
+                fpd.push(fp[i]);
+              }
+              fp.clear();
+              break;
+            }
+          }
+        }
+      }
+    }
 
-	return complete;
+    if(fpd.empty()){
+      return complete;
+    }
+    else{
+      fakeProcess m;
+      while(!fpd.empty()){
+        m = fpd.top();
+        m.p.first_run = begin;
+        begin += m.p.duration;
+        m.p.completion = begin;
+        complete.push_back(m.p);
+        fpd.pop();
+      }
+      return complete;
+    }
 
 }
 
 list<Process> stcf(pqueue_arrival workload)
 {
-  	  list<Process> complete;
-	  vector<fakeProcess> fp;
-	  fakepqueue_duration fpd;
-	  int begin = workload.top().arrival;
+    list<Process> complete;
+    vector<fakeProcess> fp;
+    fakepqueue_duration fpd;
+    int begin = workload.top().arrival;
 
-	  while(!workload.empty()){
-	  	Process t = workload.top();
-	  	fakeProcess f;
-	  	if(t.arrival <= begin){
-	  		f.p = t;
-	  		f.fake_arrival = begin;
-	  		fpd.push(f);
-	  		workload.pop();
-	  	}
-	  	else{
-	  		while(!fpd.empty()){
-	  			fakeProcess r = fpd.top();
-	  			r.p.first_run = begin;
-	  			begin += r.p.duration;
-	  			r.p.completion = begin;
-	  			fpd.pop();
-	  			complete.push_back(r.p);
-	  			if(fpd.empty()){
-	  				return complete;
-	  			}
-	  			else{
-	  				Process c = workload.top();
-	  				if(begin < c.arrival){
-	  					continue;
-	  				}
-	  				else{
-	  					while(!fpd.empty()){
-	  						fp.push_back(fpd.top());
-	  						fpd.pop();
-	  					}
-	  					for(int i = 0; i< fp.size(); i++){
-	  						fp[i].fake_arrival = begin;
-	  						fpd.push(fp[i]);
-	  					}
-	  					fp.clear();
-	  					break;
-	  				}
-	  			}
-	  		}
-	  	}
-	  }
-	  if(fpd.empty()){
-	  	return complete;
-	  }
-	  else{
-	  	fakeProcess m;
-	  	while(!fpd.empty()){
-	  		m = fpd.top();
-	  		m.p.first_run = begin;
-	  		begin += m.p.duration;
-	  		m.p.completion = begin;
-	  		complete.push_back(m.p);
-	  		fpd.pop();
-	  	}
-	  	return complete;
-	  }
+    while(!workload.empty()){
+      Process t = workload.top();
+      fakeProcess f;
+      if(t.arrival <= begin){
+        f.p = t;
+        f.fake_arrival = begin;
+        fpd.push(f);
+        workload.pop();
+      }
+      else{
+        while(!fpd.empty()){
+          fakeProcess r = fpd.top();
+          r.p.first_run = begin;
+          begin += r.p.duration;
+          r.p.completion = begin;
+          fpd.pop();
+          complete.push_back(r.p);
+          if(fpd.empty()){
+            continue;
+          }
+          else{
+            Process c = workload.top();
+            if(begin < c.arrival){
+              continue;
+            }
+            else{
+              while(!fpd.empty()){
+                fp.push_back(fpd.top());
+                fpd.pop();
+              }
+              for(int i = 0; i< fp.size(); i++){
+                fp[i].fake_arrival = begin;
+                fpd.push(fp[i]);
+              }
+              fp.clear();
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if(fpd.empty()){
+      return complete;
+    }
+    else{
+      fakeProcess m;
+      while(!fpd.empty()){
+        m = fpd.top();
+        m.p.first_run = begin;
+        begin += m.p.duration;
+        m.p.completion = begin;
+        complete.push_back(m.p);
+        fpd.pop();
+      }
+      return complete;
+    }
+}
+
+
+typedef struct rProcess rProcess;
+struct rProcess{
+  Process p;
+  int fDuration;
+  int fCompletion;
+};
+
+void RRdecrease(vector<rProcess> rp, int timeSlice)
+{
+  for(unsigned int i = 0; i < rp.size(); i++){
+    rp[i].fDuration -= timeSlice;
+  }
+}
+
+bool RoundFinish(vector<rProcess> rp)
+{
+  for(unsigned int i = 0; i < rp.size(); i++){
+    if(rp[i].fDuration  <= 0){
+      return true;
+    }
+  }
+  return false;
 }
 
 list<Process> rr(pqueue_arrival workload)
 {
   list<Process> complete;
   int timeSlice = 1;
+  vector<rProcess> d;
+  pqueue_arrival pqa;
+  int total = 0;
+  int nextArrival = workload.top().arrival;
+  rProcess r;
+
+  while(!workload.empty()){
+    if(workload.top().arrival == nextArrival){
+      pqa.push(workload.top());
+      workload.pop();
+    }
+    else{
+      if(workload.empty()){
+        break;
+      }
+      else{
+        nextArrival = workload.top().arrival;
+      }
+    }
+  }
 
   return complete;
 }
 
 float avg_turnaround(list<Process> processes)
 {
-  int turnaround;
-  int size = processes.size();
+  float turnaround;
+  float size = processes.size();
   while(!processes.empty()){
     turnaround = turnaround + (processes.front().completion - processes.front().arrival);
     processes.pop_front();
@@ -244,8 +313,8 @@ float avg_turnaround(list<Process> processes)
 
 float avg_response(list<Process> processes)
 {
-  int response;
-  int size = processes.size();
+  float response;
+  float size = processes.size();
   while(!processes.empty()){
   	response = response + (processes.front().first_run - processes.front().arrival);
   	processes.pop_front();

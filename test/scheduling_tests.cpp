@@ -42,6 +42,27 @@ TEST(SchedulingTest, SchedulingTest4) {
   EXPECT_EQ(x3.duration, 10);  
 }
 
+TEST(SchedulingTest, SchedulingTest5) {
+  pqueue_arrival pq = read_workload("workloads/workload_05.txt");
+  list<Process> l = fifo(pq);
+  pqueue_arrival p;
+  while(!l.empty()){
+    p.push(l.front());
+    l.pop_front();
+  }
+  show_workload(p);
+}
+
+TEST(SchedulingTest, SchedulingTest6) {
+  pqueue_arrival pq = read_workload("workloads/workload_05.txt");
+  list<Process> l = sjf(pq);
+  pqueue_arrival p;
+  while(!l.empty()){
+    p.push(l.front());
+    l.pop_front();
+  }
+  show_workload(p);
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

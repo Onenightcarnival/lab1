@@ -5,52 +5,34 @@
 #include <list>
 #include <vector>
 #include <sstream>
+#include <map>
 
 #include "scheduling.h"
 
 using namespace std;
 
-// vector<vector<string>> strToStrs(vector<string> str){
-// 	vector<vector<string>> r;
-// 	vector<string> s;
-// 	string line;
-// 	for(unsigned int i = 0; i < str.size(); i++){
-// 		line = str[i];
-// 		stringstream strStream(line);
-//   		char letter;
-//   		string word;
-//   		int j = 0;
-//   		while(strStream.get(letter)){
-//     		if(isspace(letter)){
-//      			if(word.size() > 0){
-//         			s[j] = word;
-//         			word.clear();
-//         			j++;
-//       			}
-//       			continue;
-//     		}
-//     		word += letter;
-//   		}
-//   		r.push_back(s);
-//   		s.clear();
-// 	}
-//   	return r;
-// }
+typedef struct fakeProcess fakeProcess;
+struct fakeProcess{
+	int fake_arrival;
+	Process p;
+};
 
-// vector<vector<int>> strToInt(vector<vector<string>> strs){
-//   vector<vector<int>> r;
-//   vector<int> v;
-//   vector<string> s;
-//   for(unsigned int i = 0; i < strs.size(); i++){
-//   	s = strs[i];
-//   	for(unsigned int j = 0; j < s.size(); j++){
-//   		v[j] = stoi(s[j]);
-//   		v[j] = stoi(s[j]);
-//   	}
-//   	r.push_back(v);
-//   }
-//   return r;
-// }
+class fakeArrivalComparator {
+public:
+  bool operator()(const fakeProcess lhs, const fakeProcess rhs)  const {
+    return lhs.p.arrival > rhs.p.arrival;
+  }
+};
+
+class fakeDurationComparator {
+public:
+  bool operator()(const fakeProcess lhs, const fakeProcess rhs)  const {
+    return lhs.p.duration > rhs.p.duration;
+  }
+};
+
+typedef priority_queue<fakeProcess, vector<fakeProcess>, fakeArrivalComparator> fakepqueue_arrival;
+typedef priority_queue<fakeProcess, vector<fakeProcess>, fakeDurationComparator> fakepqueue_duration;
 
 pqueue_arrival read_workload(string filename)
 {
@@ -69,19 +51,6 @@ pqueue_arrival read_workload(string filename)
   // }
   // afile.close();
   // afile.clear();
-
-  // vector<vector<int>> data = strToInt(strToStrs(strs));
-  // vector<int> temp;
-  // Process p;
-
-  // for(unsigned int i = 0; i < data.size(); i++){
-  // 	temp = data[i];
-  // 	p.arrival = temp[0];
-  // 	p.duration = temp[1];
-  // 	p.completion = -1;
-  // 	p.first_run = -1;
-  // 	workload.push(p);
-  // }
 
   ifstream buff;
   int temp;
@@ -130,8 +99,15 @@ void show_processes(list<Process> processes)
 list<Process> fifo(pqueue_arrival workload)
 {
   list<Process> complete;
+  int run = workload.top().arrival;
+  int finish = workload.top().duration;
   while(!workload.empty()){
-    complete.push_back(workload.top());
+  	Process p = workload.top();
+  	p.first_run = run;
+  	p.completion = finish;
+  	run = finish;
+  	finish = finish + p.duration;
+    complete.push_back(p);
     workload.pop();
   }
   return complete;
@@ -139,123 +115,118 @@ list<Process> fifo(pqueue_arrival workload)
 
 list<Process> sjf(pqueue_arrival workload)
 { 
-  // pqueue_arrival cp = workload;
-  // list<Process> complete;
-  // vector<Process> prev;
-  // vector<Process> curr;
-  // pqueue_duration qd;
-  // vector<int> arriveTable;
-  // arriveTable.push_back(prev[0].arrival);
+	list<Process> complete;
+	int begin = 0;
+	int total = 0;
+	int nextArrival = 0;
+	pqueue_duration pd;
 
-  // int i = 0;
-  // int nextArrival;
-  // int totalDuration = 0;
-  // int counter = 0;
-  // int finish;
+	while(!workload.empty()){
+		Process p = workload.top();
+		if(p.arrival == nextArrival){
+			pd.push(p);
+		}
+		else{
+			nextArrival = p.arrival;
+			while(!pd.empty()){
+				Process temp = pd.top();
+				temp.first_run = begin;
+				total += temp.duration;
+				temp.completion = total;
+				begin = total;
+				complete.push_back(temp);
+				pd.pop();
+			}
+			pd.push(p);
+		}
+		workload.pop();
+		if(workload.empty()){
+			while(!pd.empty()){
+				Process temp = pd.top();
+				temp.first_run = begin;
+				total += temp.duration;
+				temp.completion = total;
+				begin = total;
+				complete.push_back(temp);
+				pd.pop();
+			}
+		}
+	}
 
-  // if(workload.size() == 1){
-  //   Process p = workload.top();
-  //   workload.pop();
-  //   p.first_run = p.arrival;
-  //   finish = finish + p.duration;
-  //   p.completion = finish;
-  //   complete.push_back(p);
-  //   return complete;
-  // }
-  
-  // while(!workload.empty()){
-  //   //if next job has same arrival time, put it in the vector
-  //   if(workload.top().arrival == arriveTable[i]){
-  //     prev.push_back(workload.top());
-  //     workload.pop();
-  //     //if this is the last job in workload, which is base case
-  //     if(workload.empty()){
-  //       //save all the jobs in the vector whose arrival time are the same into qd
-  //       for(unsigned int j = 0; j < prev.size(); j++){
-  //         qd.push(prev[j]);
-  //       }
-  //       //compute first_run and completion then return the list
-  //       while(!qd.empty()){
-  //         qd.top().first_run = arriveTable[i];
-  //         finish = finish + qd.top().duration;
-  //         qd.top().completion = finish;
-  //         complete.push_back(qd.top());
-  //         qd.pop();
-  //       }
-  //       return complete;
-  //     }
-  //   }
-  //   else{
-  //     //save next different arrival time into timeTable
-  //     nextArrival = workload.top().arrival;
-  //     i++;
-  //     arriveTable[i] = nextArrival;
-  //     //all the jobs in the vector has the same arrival time
-  //     for(unsigned int j = 0; j < prev.size(); j++){
-  //       qd.push(prev[j]);
-  //     }
-  //     while(!qd.empty() && totalDuration < nextArrival){
-  //       qd.top().first_run = arriveTable[i - 1];
-  //       totalDuration = totalDuration + qd.top().duration;
-  //       qd.top().completion = totalDuration;
-  //       counter++;
-  //       complete.push_back(qd.top());
-  //       qd.pop();
-  //     }
-  //     if(!qd.empty()){
-  //       for(unsigned int k = counter; k < prev.size(); k++){
-  //         curr.push_back(prev[k]);
-  //       }
-  //       counter = 0;
-  //       prev = curr;
-  //       curr.clear();
-  //     }
-  //     else{
-  //       prev.clear();
-  //     }
-  //   }
-  // }
-    //   //push all the eligble jobs into duration pq
-    //   for(int j = 0; j < prev.size(); j++){
-    //     if(totalDuration < nextArrival){
-    //       qd.push(prev[j]);
-    //       totalDuration = totalDuration + prev[j].duration;
-    //     }
-    //     else{
-    //       counter = j;
-    //       break;
-    //     }
-    //   }
-    //   totalDuration = 0;
-    //   //push the eligble jobs into list
-    //   for(int k = 0; k < counter; k++){
-    //     complete.push_back(qd.top());
-    //     qd.pop();
-    //   }
-    //   //save the rest jobs and refresh their arrival time to nextArrival;
-    //   for(int x = counter; counter < prev.size(); x++){
-    //     curr.push_back(prev[x]);
-    //   }
-    //   prev = curr;
-    //   curr.clear();
-    //   // while(qd.size() != 0){
-    //   //   qd.pop();
-    //   // }
-    //   for(int n = 0; n < prev.size(); n++){
-    //     prev[n].arrival = nextArrival;
-    //   }
-    // }
+	return complete;
+
 }
 
 list<Process> stcf(pqueue_arrival workload)
 {
-  list<Process> complete;
-  return complete;
+  	  list<Process> complete;
+	  vector<fakeProcess> fp;
+	  fakepqueue_duration fpd;
+	  int begin = workload.top().arrival;
+
+	  while(!workload.empty()){
+	  	Process t = workload.top();
+	  	fakeProcess f;
+	  	if(t.arrival <= begin){
+	  		f.p = t;
+	  		f.fake_arrival = begin;
+	  		fpd.push(f);
+	  		workload.pop();
+	  	}
+	  	else{
+	  		while(!fpd.empty()){
+	  			fakeProcess r = fpd.top();
+	  			r.p.first_run = begin;
+	  			begin += r.p.duration;
+	  			r.p.completion = begin;
+	  			fpd.pop();
+	  			complete.push_back(r.p);
+	  			if(fpd.empty()){
+	  				return complete;
+	  			}
+	  			else{
+	  				Process c = workload.top();
+	  				if(begin < c.arrival){
+	  					continue;
+	  				}
+	  				else{
+	  					while(!fpd.empty()){
+	  						fp.push_back(fpd.top());
+	  						fpd.pop();
+	  					}
+	  					for(int i = 0; i< fp.size(); i++){
+	  						fp[i].fake_arrival = begin;
+	  						fpd.push(fp[i]);
+	  					}
+	  					fp.clear();
+	  					break;
+	  				}
+	  			}
+	  		}
+	  	}
+	  }
+	  if(fpd.empty()){
+	  	return complete;
+	  }
+	  else{
+	  	fakeProcess m;
+	  	while(!fpd.empty()){
+	  		m = fpd.top();
+	  		m.p.first_run = begin;
+	  		begin += m.p.duration;
+	  		m.p.completion = begin;
+	  		complete.push_back(m.p);
+	  		fpd.pop();
+	  	}
+	  	return complete;
+	  }
 }
 
 list<Process> rr(pqueue_arrival workload)
 {
   list<Process> complete;
+  int timeSlice = 1;
+
   return complete;
 }
 
@@ -265,6 +236,7 @@ float avg_turnaround(list<Process> processes)
   int size = processes.size();
   while(!processes.empty()){
     turnaround = turnaround + (processes.front().completion - processes.front().arrival);
+    processes.pop_front();
   }
   float result = turnaround / size;
   return result;
@@ -272,9 +244,14 @@ float avg_turnaround(list<Process> processes)
 
 float avg_response(list<Process> processes)
 {
-  int reponse;
+  int response;
   int size = processes.size();
-  return 0;
+  while(!processes.empty()){
+  	response = response + (processes.front().first_run - processes.front().arrival);
+  	processes.pop_front();
+  }
+  float result = response / size;
+  return result;
 }
 
 void show_metrics(list<Process> processes)

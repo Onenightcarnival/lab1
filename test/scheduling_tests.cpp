@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <list>
 
 using namespace std;
 
@@ -45,23 +46,28 @@ TEST(SchedulingTest, SchedulingTest4) {
 TEST(SchedulingTest, SchedulingTest5) {
   pqueue_arrival pq = read_workload("workloads/workload_05.txt");
   list<Process> l = fifo(pq);
-  pqueue_arrival p;
   while(!l.empty()){
-    p.push(l.front());
+    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
     l.pop_front();
   }
-  show_workload(p);
 }
 
 TEST(SchedulingTest, SchedulingTest6) {
   pqueue_arrival pq = read_workload("workloads/workload_05.txt");
   list<Process> l = sjf(pq);
-  pqueue_arrival p;
   while(!l.empty()){
-    p.push(l.front());
+    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
     l.pop_front();
   }
-  show_workload(p);
+}
+
+TEST(SchedulingTest, SchedulingTest7) {
+  pqueue_arrival pq = read_workload("workloads/workload_05.txt");
+  list<Process> l = stcf(pq);
+  while(!l.empty()){
+    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
+    l.pop_front();
+  }
 }
 
 int main(int argc, char **argv) {

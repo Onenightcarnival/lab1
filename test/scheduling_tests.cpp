@@ -43,17 +43,17 @@ TEST(SchedulingTest, SchedulingTest4) {
   EXPECT_EQ(x3.duration, 10);  
 }
 
-TEST(SchedulingTest, SchedulingTest5) {
-  pqueue_arrival pq = read_workload("workloads/workload_05.txt");
-  list<Process> l = fifo(pq);
-  while(!l.empty()){
-    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
-    l.pop_front();
-  }
-}
+// TEST(SchedulingTest, SchedulingTest5) {
+//   pqueue_arrival pq = read_workload("workloads/workload_05.txt");
+//   list<Process> l = fifo(pq);
+//   while(!l.empty()){
+//     printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
+//     l.pop_front();
+//   }
+// }
 
 TEST(SchedulingTest, SchedulingTest6) {
-  pqueue_arrival pq = read_workload("workloads/workload_05.txt");
+  pqueue_arrival pq = read_workload("workloads/workload_03.txt");
   list<Process> l = sjf(pq);
   while(!l.empty()){
     printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
@@ -106,14 +106,14 @@ TEST(SchedulingTest, SchedulingTest11) {
   }
 }
 
-TEST(SchedulingTest, SchedulingTest12) {
-  pqueue_arrival pq = read_workload("workloads/workload_05.txt");
-  list<Process> l = rr(pq);
-  while(!l.empty()){
-    printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
-    l.pop_front();
-  }
-}
+// TEST(SchedulingTest, SchedulingTest12) {
+//   pqueue_arrival pq = read_workload("workloads/workload_05.txt");
+//   list<Process> l = rr(pq);
+//   while(!l.empty()){
+//     printf("a: %d d: %d f: %d c: %d\n", l.front().arrival, l.front().duration, l.front().first_run, l.front().completion);
+//     l.pop_front();
+//   }
+// }
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

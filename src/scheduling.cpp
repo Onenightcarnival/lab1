@@ -37,38 +37,24 @@ typedef priority_queue<fakeProcess, vector<fakeProcess>, fakeDurationComparator>
 pqueue_arrival read_workload(string filename)
 {
   pqueue_arrival workload;
+  ifstream afile;
+  int data;
 
-  // ifstream afile;
-  // afile.open(filename);
-
-  // vector<string> strs;
-  // string str;
-  // while(getline(afile, str)){
-  //   if(str.empty()){
-  //     continue;
-  //   }
-  //   strs.push_back(str);
-  // }
-  // afile.close();
-  // afile.clear();
-
-  ifstream buff;
-  int temp;
-
-  buff.open(filename);
-  if(buff){
-  	while(buff >> temp){
+  afile.open(filename);
+  if(afile){
+  	while(afile >> data){
   		Process p;
-  		p.arrival = temp;
-      p.first_run = -1;
-      p.completion = -1;
-  		if(buff >> temp){
-        p.duration = temp;
+  		p.arrival = data;
+      	p.first_run = -1;
+      	p.completion = -1;
+  		if(afile >> data){
+        p.duration = data;
       }
   		workload.push(p);
   	}
   }
-  buff.close();
+  afile.close();
+  afile.clear();
 
   return workload;
 }
@@ -246,25 +232,19 @@ list<Process> stcf(pqueue_arrival workload)
     }
 }
 
-
 typedef struct rProcess rProcess;
 struct rProcess{
   Process p;
   int fDuration;
-  int fCompletion;
 };
-
-void RRdecrease(vector<rProcess> rp, int timeSlice)
-{
-  for(unsigned int i = 0; i < rp.size(); i++){
-    rp[i].fDuration -= timeSlice;
-  }
-}
 
 bool RoundFinish(vector<rProcess> rp)
 {
+  if(rp.empty()){
+  	return false;
+  }
   for(unsigned int i = 0; i < rp.size(); i++){
-    if(rp[i].fDuration  <= 0){
+    if(rp[i].fDuration <= 0){
       return true;
     }
   }
@@ -276,23 +256,71 @@ list<Process> rr(pqueue_arrival workload)
   list<Process> complete;
   int timeSlice = 1;
   vector<rProcess> d;
-  pqueue_arrival pqa;
   int total = 0;
-  int nextArrival = workload.top().arrival;
-  rProcess r;
 
   while(!workload.empty()){
-    if(workload.top().arrival == nextArrival){
-      pqa.push(workload.top());
-      workload.pop();
-    }
-    else{
-      if(workload.empty()){
-        break;
-      }
-      else{
-        nextArrival = workload.top().arrival;
-      }
+    	if(RoundFinish(d)){
+    		vector<rProcess> t;
+    		for(unsigned int i = 0; i < d.size(); i++){
+    			if(d[i].fDuration <= 0){
+    				complete.push_back(d[i].p);
+    			}
+    			else{
+    				t.push_back(d[i]);
+    			}
+    		}
+    		d = t;	
+    	}
+    	else{
+    		while(workload.top().arrival <= total){
+      			if(workload.empty()){
+      				break;
+      			}
+      			rProcess r;
+      			r.p = workload.top();
+      			r.p.first_run = total + d.size() * timeSlice;
+      			r.p.completion = total;
+      			r.fDuration = r.p.duration;
+      			d.push_back(r);
+      			workload.pop();   	
+      		}
+      		for(unsigned int i = 0; i < d.size(); i++){
+    			d[i].fDuration -= timeSlice;
+    			d[i].p.completion = total + timeSlice * (i + 1);
+  			} 			
+        	total += d.size() * timeSlice;
+        	if(RoundFinish(d)){
+    		vector<rProcess> t;
+    		for(unsigned int i = 0; i < d.size(); i++){
+    			if(d[i].fDuration <= 0){
+    				complete.push_back(d[i].p);
+    			}
+    			else{
+    				t.push_back(d[i]);
+    			}
+    		}
+    		d = t;	
+    		}
+    	}
+  }
+
+  while(!d.empty()){
+  	for(unsigned int i = 0; i < d.size(); i++){
+    	d[i].fDuration -= timeSlice;
+    	d[i].p.completion = total + timeSlice * (i + 1);
+  	}
+  	total += d.size() * timeSlice;
+  	if(RoundFinish(d)){
+    	vector<rProcess> t;
+    	for(unsigned int i = 0; i < d.size(); i++){
+    		if(d[i].fDuration <= 0){
+    			complete.push_back(d[i].p);
+    		}
+    		else{
+    			t.push_back(d[i]);
+    		}
+    	}
+    	d = t;
     }
   }
 
